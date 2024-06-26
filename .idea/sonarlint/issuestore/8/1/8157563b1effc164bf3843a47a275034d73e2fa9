@@ -1,8 +1,8 @@
 
-¢python:S117"`Rename this local variable "WelcomeKeyboard" to match the regular expression ^[_a-z][a-z0-9_]*$.(„Öí€şÿÿÿÿJ$28a13a80-813e-45d7-9560-9ac754e269b8
-’python:S117"URename this local variable "Menu" to match the regular expression ^[_a-z][a-z0-9_]*$.(“Ö™œJ$d8b6f45a-46c8-4760-8ce6-0a73811f0065
-Œpython:S1542"NRename function "MainMenu" to match the regular expression ^[a-z_][a-z0-9_]*$.(“ä£ËJ$07e5ad24-7fb5-457b-bdd0-b450ca7588be
-python:S117"`Rename this local variable "ReferalKeyboard" to match the regular expression ^[_a-z][a-z0-9_]*$.(´É÷ÅJ$30657b81-d530-40ec-b1f3-6a5bfe44ab3b
-•python:S1542"RRename function "InviteButton" to match the regular expression ^[a-z_][a-z0-9_]*$.(ØåèˆùÿÿÿÿJ$0a8d62f3-aab9-472e-a304-8bc9970109cd
-™python:S117"WRename this local variable "Cancle" to match the regular expression ^[_a-z][a-z0-9_]*$.(Ì•ç»ÿÿÿÿÿJ$cc3e73a3-84dc-4a80-bde5-ea3efaa871dd
-python:S1542"PRename function "CancleMenu" to match the regular expression ^[a-z_][a-z0-9_]*$.(ò€×ŠJ$85065f94-c06f-4c40-b9eb-ebbe054be958
+¢python:S117"`Rename this local variable "WelcomeKeyboard" to match the regular expression ^[_a-z][a-z0-9_]*$.(„Öí€şÿÿÿÿJ$f31fb2d1-7776-4a73-8871-88a58742fc00
+’python:S117"URename this local variable "Menu" to match the regular expression ^[_a-z][a-z0-9_]*$.(“Ö™œJ$bbf1746c-d4e9-44dc-91a9-b6bb1e64f823
+Œpython:S1542"NRename function "MainMenu" to match the regular expression ^[a-z_][a-z0-9_]*$.(“ä£ËJ$04727b8e-a42f-4d65-9e6a-754d6a69938d
+python:S117"`Rename this local variable "ReferalKeyboard" to match the regular expression ^[_a-z][a-z0-9_]*$.(´É÷ÅJ$4f1ae9fa-3eff-4f10-8f98-162f11ab29d2
+•python:S1542"RRename function "InviteButton" to match the regular expression ^[a-z_][a-z0-9_]*$.(ØåèˆùÿÿÿÿJ$64479664-e0bd-45e7-99c2-8b452d721585
+™python:S117"WRename this local variable "Cancle" to match the regular expression ^[_a-z][a-z0-9_]*$.(Ì•ç»ÿÿÿÿÿJ$158ae98c-014d-4067-b0aa-9429e5040173
+python:S1542"PRename function "CancleMenu" to match the regular expression ^[a-z_][a-z0-9_]*$.(ò€×ŠJ$c6cfbd4b-e086-4b51-ad56-f8cc295b5719

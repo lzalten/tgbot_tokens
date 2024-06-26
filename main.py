@@ -1,53 +1,87 @@
 import telebot
 import pymysql
+from telebot.types import CallbackQuery, Message
+
 import inline_keyboards
 import Message_Settings
 import Image_Settings
 
 import sqlite3
+
+chanel_id = -1002151936509
+
 connection = sqlite3.connect('telegrambot.db')
 
+cursor = connection.cursor()
 
-with connection:
-    cursor = connection.cursor()
+# Создание таблицы users, если она не существует
+cursor.execute('''CREATE TABLE IF NOT EXISTS users (
+                       ID INTEGER PRIMARY KEY,
+                       Referal TEXT,
+                       Balance INTEGER,
+                       Wallet TEXT
+                   )''')
 
-    # Создание таблицы users, если она не существует
-    cursor.execute('''CREATE TABLE IF NOT EXISTS users (
-                        ID INTEGER PRIMARY KEY,
-                        Referal TEXT,
-                        Balance INTEGER,
-                        Wallet TEXT
-                    )''')
+connection.commit()
+connection.close()
+print('Таблица users создана или уже существует')
 
-    connection.commit()
+bot = telebot.TeleBot("7267290358:AAE_3zT6Io-Q9fQYnsWvb7bNTkYauUGV2Ao")
 
-    # После создания таблицы, выполните ваш запрос SELECT
-    cursor.execute("SELECT * FROM users")
-    rows = cursor.fetchall()
-    for row in rows:
-        print(row)
-
-bot = telebot.TeleBot("7338083536:AAHqzQenO42JdSAiM5gjgWP-hAQgs8gS4FQ")
 
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
-    if message.chat and message.chat.id:
-        member = bot.get_chat_member(-1002151936509, message.chat.id)
-        #Условия подписки
-        if member.status in ['member', 'administrator', 'creator']:
-            bot.send_message(message.chat.id, "🔝 Главное Меню", reply_markup=inline_keyboards.MainMenu())
-            bot.send_photo(message.chat.id, photo=Image_Settings.PhotoTake['Welcome'], caption=Message_Settings.MENU_message, parse_mode='Markdown', reply_markup=inline_keyboards.InviteButton())
-        else:
-            bot.reply_to(message, Message_Settings.WELCOME_message, reply_markup=inline_keyboards.welcome_keys())
+    # Проверка на наличие пользователя в базе данных
+    connection = sqlite3.connect('telegrambot.db')
+    cursor = connection.cursor()
+    cursor.execute(f"SELECT ID FROM users WHERE ID = {message.chat.id}")
+    existing_user = cursor.fetchone()
+    if not existing_user:
+        # Регистрация нового пользователя
+        cursor.execute(f"INSERT INTO users (`ID`, `Referal`, `Balance`, `Wallet`) VALUES ({message.chat.id},' ' , 0, 'Отсутствует')")
+        connection.commit()
+
+    connection.close()
+    member = bot.get_chat_member(chanel_id, message.chat.id)
+    # Условия подписки
+    if member.status in ['member', 'administrator', 'creator']:
+        # Проверка наличия реферального айди
+        if len(message.text.split()) > 1:
+            referral_id = message.text.split()[-1]
+            connection = sqlite3.connect('telegrambot.db')
+            cursor = connection.cursor()
+            cursor.execute(f"SELECT ID FROM users WHERE ID = {referral_id}")
+            invited_user = cursor.fetchone()
+            if invited_user:
+                cursor.execute(f"SELECT Referal FROM users WHERE ID = {message.chat.id}")
+                referals = cursor.fetchone()[0]
+                print(referals)
+                if referral_id not in referals.split():
+                    referals += f" {message.chat.id}"
+                    cursor.execute(f"UPDATE users SET Referal = {referals} WHERE ID = {referral_id}")
+                    connection.commit()
+
+            connection.close()
+
+        bot.send_message(message.chat.id, "🔝 Главное Меню", reply_markup=inline_keyboards.MainMenu())
+        bot.send_photo(message.chat.id, photo=Image_Settings.PhotoTake['Welcome'],
+                       caption=Message_Settings.MENU_message, parse_mode='Markdown',
+                       reply_markup=inline_keyboards.InviteButton())
     else:
         # Handle case where chat ID is missing or invalid
-        bot.reply_to(message, "Invalid chat ID")
+        bot.reply_to(message, "❌Вы не подписаны на канал")
 @bot.message_handler(func=lambda message: True)
-def error_message(message):
+def error_message(message: Message):
     if message.text == 'Условия\\Terms 📃':
         bot.send_photo(message.chat.id, Image_Settings.PhotoTake['Terms'], caption=Message_Settings.Terms_message,parse_mode='Markdown', reply_markup=inline_keyboards.InviteButton())
     elif message.text == 'Баланс\\Balance 🙂':
-        bot.send_photo(message.chat.id, Image_Settings.PhotoTake['Balance'], caption=Message_Settings.Balance_message,parse_mode='Markdown', reply_markup=inline_keyboards.InviteButton())
+        connection = sqlite3.connect('telegrambot.db')
+        cursor = connection.cursor()
+        cursor.execute(f"SELECT Referal FROM users WHERE ID = {message.from_user.id}")
+        referals = cursor.fetchone()
+        connection.close()
+        text = f'Ваш баланс:\n_{len(referals[0].split())} ref. = {len(referals[0].split()) * 200} $SMILE_\n\nДля получения больше токенов, пригласите больше друзей, 1 реферал - 200 токенов\n\n_Пригласить больше друзей 👇🏼_'
+        bot.send_photo(message.chat.id, Image_Settings.PhotoTake['Balance'], caption=text,parse_mode='Markdown', reply_markup=inline_keyboards.InviteButton())
     elif message.text == 'Кошелек\\Wallet 👛':
         bot.send_photo(message.chat.id, Image_Settings.PhotoTake['Wallet'], caption=Message_Settings.Wallet_message,parse_mode='Markdown',reply_markup=inline_keyboards.CancleMenu())
         sent = bot.send_message(message.chat.id, "Введите ваш кошелек:")
@@ -62,11 +96,11 @@ def error_message(message):
         bot.reply_to(message, Message_Settings.ERROR_message, parse_mode='Markdown')
 
 @bot.callback_query_handler(func=lambda call: True)
-def callback_query(call):
+def callback_query(call: CallbackQuery):
     if call.data == "check":
         #Условия подписки
         UserBoxID = call.message.chat.id
-        member = bot.get_chat_member(-1002151936509, UserBoxID)
+        member = bot.get_chat_member(chanel_id, UserBoxID)
         if member.status in ['member', 'administrator', 'creator']:
             bot.delete_message(call.message.chat.id, call.message.message_id)
             bot.send_message(call.message.chat.id, "🔝 Главное Меню", reply_markup=inline_keyboards.MainMenu())
@@ -80,6 +114,9 @@ def callback_query(call):
         else:
             bot.delete_message(call.message.chat.id, call.message.message_id)
             bot.send_message(call.message.chat.id, Message_Settings.WELCOME_message, reply_markup = inline_keyboards.welcome_keys())
+    elif call.data == 'Invite':
+        bot.send_message(chat_id=call.message.chat.id ,text = f"Ваша реферальная ссылка: {generate_telegram_bot_referral_link(call.from_user.id)}")
+
 
 def save_wallet(message):
     if message.text == 'Отмена❌':
@@ -103,6 +140,9 @@ def save_wallet(message):
         # Коммит изменений
         connection.commit()
 
+
+def generate_telegram_bot_referral_link(referral_code):
+    return f"https://t.me/testhepler444kaka_bot?start={referral_code}"
 
 
 bot.infinity_polling()
