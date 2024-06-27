@@ -8,7 +8,7 @@ import Image_Settings
 
 import sqlite3
 
-chanel_id = -1002151936509
+chanel_id = -1002224769146
 
 connection = sqlite3.connect('telegrambot.db')
 
@@ -17,7 +17,7 @@ cursor = connection.cursor()
 # Создание таблицы users, если она не существует
 cursor.execute('''CREATE TABLE IF NOT EXISTS users (
                        ID INTEGER PRIMARY KEY,
-                       Referal TEXT,
+                       Referal VARCHAR,
                        Balance INTEGER,
                        Wallet TEXT
                    )''')
@@ -26,7 +26,7 @@ connection.commit()
 connection.close()
 print('Таблица users создана или уже существует')
 
-bot = telebot.TeleBot("7267290358:AAE_3zT6Io-Q9fQYnsWvb7bNTkYauUGV2Ao")
+bot = telebot.TeleBot("6502174873:AAGOgV4qSkYO_eW455MOTjMa8JNaARLDzhk")
 
 
 @bot.message_handler(commands=['start', 'help'])
@@ -34,11 +34,13 @@ def send_welcome(message):
     # Проверка на наличие пользователя в базе данных
     connection = sqlite3.connect('telegrambot.db')
     cursor = connection.cursor()
-    cursor.execute(f"SELECT ID FROM users WHERE ID = {message.chat.id}")
-    existing_user = cursor.fetchone()
+    cursor.execute(f"SELECT ID FROM users WHERE ID = {message.from_user.id}")
+    existing_user = cursor.fetchone()[0]
+    print(existing_user)
     if not existing_user:
+        print('tut')
         # Регистрация нового пользователя
-        cursor.execute(f"INSERT INTO users (`ID`, `Referal`, `Balance`, `Wallet`) VALUES ({message.chat.id},' ' , 0, 'Отсутствует')")
+        cursor.execute(f"INSERT INTO users (`ID`, `Referal`, `Balance`, `Wallet`) VALUES ({message.from_user.id},'32233223' , 0, 'Отсутствует')")
         connection.commit()
 
     connection.close()
@@ -51,17 +53,23 @@ def send_welcome(message):
             connection = sqlite3.connect('telegrambot.db')
             cursor = connection.cursor()
             cursor.execute(f"SELECT ID FROM users WHERE ID = {referral_id}")
-            invited_user = cursor.fetchone()
-            if invited_user:
-                cursor.execute(f"SELECT Referal FROM users WHERE ID = {message.chat.id}")
-                referals = cursor.fetchone()[0]
-                print(referals)
-                if referral_id not in referals.split():
-                    referals += f" {message.chat.id}"
-                    cursor.execute(f"UPDATE users SET Referal = {referals} WHERE ID = {referral_id}")
-                    connection.commit()
-
+            invited_user = cursor.fetchone()[0]
             connection.close()
+            if invited_user:
+                connection = sqlite3.connect('telegrambot.db')
+                cursor = connection.cursor()
+                cursor.execute(f"SELECT Referal FROM users WHERE ID = {referral_id}")
+                referals = cursor.fetchone()[0]
+                connection.close()
+                if str(message.from_user.id) not in referals.split('_'):
+                    referals+=f'_{message.from_user.id}'
+                    print(referals)
+                    with sqlite3.connect('telegrambot.db') as connection:
+                        cursor = connection.cursor()
+                        cursor.execute("UPDATE users SET Referal = ? WHERE ID = ?", (referals, int(referral_id)))
+                        connection.commit()
+
+
 
         bot.send_message(message.chat.id, "🔝 Главное Меню", reply_markup=inline_keyboards.MainMenu())
         bot.send_photo(message.chat.id, photo=Image_Settings.PhotoTake['Welcome'],
@@ -78,9 +86,9 @@ def error_message(message: Message):
         connection = sqlite3.connect('telegrambot.db')
         cursor = connection.cursor()
         cursor.execute(f"SELECT Referal FROM users WHERE ID = {message.from_user.id}")
-        referals = cursor.fetchone()
+        referals = cursor.fetchone()[0]
         connection.close()
-        text = f'Ваш баланс:\n_{len(referals[0].split())} ref. = {len(referals[0].split()) * 200} $SMILE_\n\nДля получения больше токенов, пригласите больше друзей, 1 реферал - 200 токенов\n\n_Пригласить больше друзей 👇🏼_'
+        text = f'Ваш баланс:\n_{len(referals.split('_'))} ref. = {len(referals.split('_')) * 200} $SMILE_\n\nДля получения больше токенов, пригласите больше друзей, 1 реферал - 200 токенов\n\n_Пригласить больше друзей 👇🏼_'
         bot.send_photo(message.chat.id, Image_Settings.PhotoTake['Balance'], caption=text,parse_mode='Markdown', reply_markup=inline_keyboards.InviteButton())
     elif message.text == 'Кошелек\\Wallet 👛':
         bot.send_photo(message.chat.id, Image_Settings.PhotoTake['Wallet'], caption=Message_Settings.Wallet_message,parse_mode='Markdown',reply_markup=inline_keyboards.CancleMenu())
